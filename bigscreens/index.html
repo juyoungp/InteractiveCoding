@@ -1,0 +1,235 @@
+<html>
+  <head>
+
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    
+    <script src="/js/toxiclibs.js"></script>
+    <script src="/js/processing-1.4.1.js"></script>
+    <script src="/socket.io/socket.io.js"></script>  
+    <script>
+
+      //var socket = io.connect('http://bigscreensprototype.herokuapp.com/');
+      var socket = io.connect('http://localhost:5000/');
+      //var socket = io.connect('http://ec2-54-200-79-16.us-west-2.compute.amazonaws.com:8080/');
+
+      var scream = "<audio autoplay><source src = 'http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/180350__jorickhoofd__scream-noooh.wav' type= 'audio/wav'></audio>";
+      var song = "<audio autoplay><source src = 'http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/Tetris-8-bit-Music-Tetris-Theme-Song.mp3' type= 'audio/mp3'></audio>";
+
+      var id; 
+      var type;
+      var userObjs = [];
+
+      var objectX;
+      var objectY;
+      var objectID; 
+
+      var controllerID;
+      var deathnote = [];
+      var deathland;
+
+      var displayText1 = "";
+      var displayText2 = "";
+      var displayText3 = "";
+
+      var scream = document.getElementsByTagName("audio")[0];
+
+      socket.on('connect', function(){
+
+        id = socket.socket.sessionid;
+        console.log("Connected : "+socket.socket.sessionid);
+      });
+
+      socket.on('news', function (data) {
+           console.log(data);
+           
+           type = data.uType;
+
+           if(data.uType == 'display') {
+            displayCanvas();
+           }else if(data.uType == 'controller') {
+            controllerID = data.uid;
+            displayController();
+           }else if(data.uType == 'user') {
+            createUser(data);
+           }
+           
+          // console.log("c in news : "+controllerID);
+      });
+
+      socket.on('button', function (data) {
+
+       for(var i = 0 ; i < userObjs.length; i++){
+
+          if(userObjs[i].objectID == data.id){
+            userObjs[i].sectionID = data.button;  
+            //console.log("find the moving user!: " + userObjs[i].sectionID);
+            chooseOne(data);
+          } 
+        } 
+
+        //console.log("c in button socket: "+controllerID);
+
+        if(data.uType == 'controller'){
+          //console.log(data);
+
+          for(var i = 0 ; i < userObjs.length; i++){
+            if(userObjs[i].sectionID == data.button){
+              deathnote.push(userObjs[i].objectID);  
+            //console.log("find the moving user!: " + userObjs[i].sectionID);
+            deathland = data.button;
+            } 
+          } 
+          //chooseOne(data);
+          kill(deathland);
+          deathnote = [];
+          console.log(deathnote.length);
+        }
+      });
+
+      var kill = function (sectionID){
+
+          //console.log("c in kill : "+controllerID);
+
+          if(sectionID == 1){
+               displayText1 = "BOOM!!"
+          }else if(sectionID == 2){
+               displayText2 = "BOOM!!" 
+          }else if(sectionID == 3){
+               displayText3 = "BOOM!!"
+          }
+
+          //scream.play();
+
+          for(var i = 0 ; i < deathnote.length; i++){
+            removeUser(deathnote[i]);
+            socket.emit('kill',deathnote[i]);
+            console.log("deathnote : "+ deathnote[i]);
+
+          }
+
+          
+          setInterval(function(){
+                displayText1 = "bit.ly/chooseordie";
+                displayText2 = "bit.ly/chooseordie";
+                displayText3 = "bit.ly/chooseordie";
+          }, 1000);
+
+     };
+
+      var sendbtn = function(button) {
+        socket.emit('button', { id: id, button: button });
+      };
+
+      socket.on('message', function (data){
+
+        //console.log("Recieved : "+ data);
+          if (data == "You've got killed"){ 
+             window.open('', '_self', '');
+            window.close();
+          }
+
+      });
+
+      var displayController = function(){
+
+        console.log("I'm the controller!");
+        document.getElementById("debug").innerHTML = "You're the controller!";
+       
+      };
+
+      socket.on('disconnect', function (data){
+
+        //console.log("Disconnected User : "+ data);
+        removeUser(data);
+        //window.close();
+
+      });
+
+      var canvas;
+      var context;
+      var processingInstance;
+
+
+      var initcanvas = function(){
+
+        canvas = document.getElementById("thecanvas");  
+        context = canvas.getContext('2d');
+        
+      };
+
+      var chooseOne = function (data){
+        var choice = {
+             objectID : data.id,
+             sectionID : data.button,
+        };
+
+        var pjs = Processing.getInstanceById("thecanvas");          
+        //pjs.addUser(userObj.objectID);
+        pjs.setSection(choice.objectID, choice.sectionID);
+
+      };
+
+      var createUser = function (data){
+
+        var userObj = {
+
+          objectID : data.uid,
+          objectIndex : data.index,
+          sectionID : 2
+
+        };
+
+        userObjs.push(userObj);
+        //console.log(userObjs);
+
+        var pjs = Processing.getInstanceById("thecanvas");          
+        //pjs.addUser(userObj.objectID);
+        pjs.addParticle(userObj.objectID);
+        
+      };
+
+      var removeUser = function(data){
+
+        for(var i = 0 ; i < userObjs.length ; i++){
+
+          if(userObjs[i].objectID == data){
+
+              userObjs.splice(i,1);
+              
+              var pjs = Processing.getInstanceById("thecanvas");          
+              pjs.removeUsers(data);
+
+          }
+        }
+      };
+
+      var displayCanvas = function(){
+        canvas.style.display="inline";
+        
+        var Display_socket_buttons = document.getElementById("gui"); 
+        Display_socket_buttons.style.display = "none";  
+
+      };      
+
+    </script>
+    
+  </head>
+  <body onload = "initcanvas();">
+
+    <audio id="scream"><source src = 'http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/180350__jorickhoofd__scream-noooh.wav' type= 'audio/wav'></audio>
+
+    
+    <div class="container" id = "gui" style = "display:inline">
+      <div id="debug"><h3>Choose a land of survival!</h3></div>
+       <button id="red" onclick= "sendbtn(1);"></button>
+       <br/>
+       <button id="yellow" onclick= "sendbtn(2);"></button>
+       <br/>
+       <button id="purple" onclick= "sendbtn(3);"></button>
+    </div>
+    <canvas width = "1212" height = "558" id = "thecanvas" style = "display:none" data-processing-sources="/pjs/display.pde"></canvas>
+
+  </body>
+</html>

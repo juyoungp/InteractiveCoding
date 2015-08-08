@@ -1,0 +1,111 @@
+<html>
+	<head>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+		<script>
+		
+		//var socket = io.connect('http://localhost:5000/');
+		var socket = io.connect('http://ec2-54-200-42-18.us-west-2.compute.amazonaws.com:8080/');
+
+			console.log();
+			console.log();
+			console.log("hello", window.location.pathname);
+			console.log();
+			console.log();
+
+			var path = window.location.pathname;
+			var role = null;
+
+			socket.on('connect', function(){
+
+				if(path == '/display1') {
+					role = 'display';
+				} else if(path == '/display2') {
+					role = 'display';
+				} else if(path == '/display3') {
+					role = 'display';
+				} else if(path == '/1') {
+					role = 'user_group1';
+				} else if(path == '/2') {
+					role = 'user_group2';
+				} else if(path == '/3') {
+					role = 'user_group3';
+				}	
+				socket.emit('register',role);
+				//console.log(socket.socket.sessionid, role);
+			});
+
+			socket.on('render', function (data){
+				console.log(data);
+				// draw user on the screen! 
+				if(data.role === "display"){
+					console.log("This is a display screen!")
+					
+					// var _canvas = document.createElement('canvas');
+					// _canvas.setAttribute("id","thecanvas");
+					// _canvas.setAttribute("width","3840");
+					// _canvas.setAttribute("height","1080");
+
+					// document.getElementById("container").appendChild(_canvas); 
+					document.getElementById("container").setAttribute("width","3840");  
+					document.getElementById("container").setAttribute("height","1080");  
+					
+					init(); 
+					
+				}else if( data.role === "user_group1" || data.role === "user_group2" || data.role === "user_group3"){
+					drawCharacter(data.index, data.index*200,200,100);
+				}
+			});
+
+			function init(){
+
+					var canvas = document.getElementById("thecanvas");
+			        var ctx = canvas.getContext('2d');
+
+					var WIDTH = canvas.width;
+					var HEIGHT = canvas.height;
+
+			};
+
+			var drawCharacter = function(index,x,y,size){
+
+				var nameList = [
+			        {name: "obama", url:"http://itp.nyu.edu/~jj1357/characters/ObamaF.jpg"},
+			        {name: "stevejobs", url: "http://itp.nyu.edu/~jj1357/characters/stevejobsF.jpg"},
+			        {name: "ladygaga", url: "http://itp.nyu.edu/~jj1357/characters/ladygagaF.jpg"},
+			        {name: "danielshiffman", url: "http://itp.nyu.edu/~jj1357/characters/danielshiffmanF.jpg"},
+			        {name: "nickiminaj", url: "http://itp.nyu.edu/~jj1357/characters/nickiminajF.jpg"},
+			        {name: "spongebob", url: "http://itp.nyu.edu/~jj1357/characters/spongebobF.jpg"},
+			        {name: "marilynmonroe", url: "http://itp.nyu.edu/~jj1357/characters/marilynmonroeF.jpg"},
+			        {name: "michaeljackson", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/michaeljacksonF.jpg"},
+			        {name: "katyperry", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/katyperryF.jpg"},
+			        {name: "harrypotter", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/harrypotterF.jpg"},
+			        {name: "mimi", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/mimiF.jpg"},
+			        {name: "jacksparrow", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/jacksparrowF.jpg"},
+			        {name: "conan", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/conanF.jpg"},
+			        {name: "hitler", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/hitlerF.jpg"},
+			        {name: "johnlennon", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/johnlennonF.jpg"},
+			        {name: "homersimpson", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/homersimpsonF.jpg"},
+			        {name: "wario", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/warioF.jpg"},
+			        {name: "mario", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/marioF.jpg"},
+			        {name: "superman", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/supermanF.jpg"},
+			        {name: "batman", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/batmanF.jpg"},
+			        {name: "spiderman", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/spidermanF.jpg"},
+			        {name: "ironman", url: "http://itp.nyu.edu/~jyp323/ju/wp-content/uploads/2013/10/ironmanF.jpg"}
+			        ];
+
+			        var icon = document.createElement('img');
+						icon.setAttribute("src", nameList[index].url);
+						icon.setAttribute("name", nameList[index].name);
+						icon.setAttribute("width",size);
+
+					document.getElementById("container").appendChild(icon);  
+
+          	};
+
+		</script>
+	</head>
+	<body>
+		<div id = "container"></div>	
+	</body>
+</html>
